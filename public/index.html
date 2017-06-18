@@ -14,6 +14,34 @@
 	</style>
 </head>
 <body>
-	<h1>Coming soon</h1>
+	<h1>Current Temperature: <span class="temperature">N/A</span>&deg; C (<span class="temperature-fahrenheit">N/A</span>&deg; F)</h1>
+	<script>
+		class SmartCooler {
+			static queryData() {
+				fetch('/data').then(function(response) {
+					return response.json();
+				}).then((json) => {
+					this.updateTemperature(json.temperature);
+				});
+			}
+
+			static updateTemperature(temperature) {
+				document.querySelector('.temperature').textContent = temperature;
+				document.querySelector('.temperature-fahrenheit').textContent = this.convertCToF(temperature);
+			}
+
+			static convertCToF(temperature) {
+				return (temperature * 9/5 + 32).toFixed(2);
+			}
+
+			static pollData() {
+				let interval = setInterval(() => {
+					this.queryData();
+				}, 1000);
+			};
+		}
+
+		SmartCooler.pollData();
+	</script>
 </body>
 </html>

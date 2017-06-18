@@ -29,21 +29,22 @@ var port = new SerialPort('/dev/ttyACM0', {
 	stopBits: 1,
 });
 
-var temperature = 0;
+var jsonData = {};
 port.on('open', function() {
 	console.log('open serial communication');
 	port.on('data', function(data) {
 		//console.log(data.toString());
 		try {
-			temperature = JSON.parse(data).temperature;
-			//console.log(temperature);
+			jsonData = JSON.parse(data);
 		} catch (err) {
 		}
 	});
 });
 
-app.get('/', function(req, res) {
-	res.send("temperature: " + temperature);
+app.use(express.static('public'));
+
+app.get('/data', function(req, res) {
+	res.json(jsonData);
 });
 
 app.listen(80, function() {
