@@ -1,34 +1,12 @@
-var http = require('http');
 var eddystoneBeacon = require('eddystone-beacon');
-var bleno = require('bleno');
+var express = require('express');
+var app = express();
 
-var characteristic = new bleno.Characteristic({
-	uuid: '98207dcc-53a2-11e7-9608-b827ebacd514',
-	properties: ['read'],
-	value: new Buffer('example')
-});
-
-var service = new bleno.PrimaryService({
-	uuid: '98207dcc-53a2-11e7-9608-b827ebacd514',
-	characteristics: [
-		characteristic
-	]
-});
-
-bleno.once('advertistingStart', function(err) {
-	if (err) {
-		throw err;
-	}
-
-	console.log('on -> advertisingStart');
-	bleno.setServices([
-		service
-	]);
-});
+// BLE Beacon
 
 //var url = 'https://goo.gl/G88oMo';
-//var url = 'https://smartcooler.io';
-var url = 'https://goo.gl/UWeSPT';
+//var url = 'https://goo.gl/UWeSPT';
+var url = 'https://smartcooler.io';
 
 var options = {
 	name: 'Smart Cooler',
@@ -39,6 +17,35 @@ var options = {
 
 eddystoneBeacon.advertiseUrl(url, options);
 
-http.createServer(function(request, response) {
-	console.log('Beacon is running');
-}).listen(6000);
+// Arduino sensor
+var SerialPort = require('serialport');
+
+var port = new SerialPort('/dev/ttyACM0', {
+	baudrate: 9600,
+	dataBits: 8,
+	flowControl: false,
+	parity: 'none',
+	parser: SerialPort.parsers.readline('\n'),
+	stopBits: 1,
+});
+
+var temperature = 0;
+port.on('open', function() {
+	console.log('open serial communication');
+	port.on('data', function(data) {
+		//console.log(data.toString());
+		try {
+			temperature = JSON.parse(data).temperature;
+			//console.log(temperature);
+		} catch (err) {
+		}
+	});
+});
+
+app.get('/', function(req, res) {
+	res.send("temperature: " + temperature);
+});
+
+app.listen(80, function() {
+	console.log('App is listening on port 80');
+});
