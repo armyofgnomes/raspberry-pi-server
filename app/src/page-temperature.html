@@ -1,0 +1,87 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="page-temperature">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+
+        padding: 10px;
+      }
+    </style>
+
+    <div class="card">
+      <h1>Temperature</h1>
+      <button hidden="[[_connected]]" on-click="handleConnectClick">Connect to device</button>
+      <button hidden="[[!_connected]]" on-click="handleDisconnectClick">Disconnect</button>
+      <p>{{temperature}}</p>
+    </div>
+  </template>
+
+  <script>
+    class PageTemperature extends Polymer.Element {
+      static get is() { return 'page-temperature'; }
+
+      static get properties() {
+        return {
+          _device: Object,
+          _connected: {
+            type: Boolean,
+            value: false,
+          },
+          temperature: String,
+        };
+      }
+
+      handleConnectClick() {
+        navigator.bluetooth.requestDevice({ filters: [{ services: ['battery_service'] }] })
+          .then(device => {
+            this._device = device;
+            this._connected = true;
+            device.addEventListener('gattserverdisconnected', this.handleDisconnect.bind(this));
+            return device.gatt.connect();
+          })
+          .then(server => {
+            // Getting Battery Service...
+            return server.getPrimaryService('battery_service');
+          })
+          .then(service => {
+            // Getting Battery Level Characteristic...
+            return service.getCharacteristic('battery_level');
+          })
+          .then(characteristic => characteristic.startNotifications())
+          .then(characteristic => {
+            characteristic.addEventListener('characteristicvaluechanged',
+                                            this.handleCharacteristicValueChanged.bind(this));
+            return characteristic;
+          })
+          .then(characteristic => {
+            return characteristic.readValue();
+          })
+          .then(value => {
+            this.temperature = value.getUint8(0);
+          })
+          .catch(error => { console.log(error); });
+      }
+
+      handleDisconnectClick() {
+        if (this._device.gatt.connected) {
+          this._device.gatt.disconnect();
+        }
+        this._connected = false;
+      }
+
+      handleCharacteristicValueChanged(event) {
+        let value = event.target.value;
+        this.temperature = value.getUint8(0);
+      }
+
+      handleDisconnect(event) {
+        this._connected = false;
+      }
+    }
+
+    window.customElements.define(PageTemperature.is, PageTemperature);
+  </script>
+</dom-module>
