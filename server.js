@@ -1,5 +1,6 @@
 var eddystoneBeacon = require('eddystone-beacon');
 var express = require('express');
+var bleno = require('bleno');
 var app = express();
 
 // BLE Beacon
@@ -16,6 +17,75 @@ var options = {
 };
 
 eddystoneBeacon.advertiseUrl(url, options);
+
+// BLE Temperature
+class TemperatureCharacteristic extends bleno.Characteristic {
+  constructor() {
+    super({
+      uuid: 'fc0a',
+      properties: ['read', 'write', 'notify'],
+      value: null
+    });
+
+    this._lastValue = 0;
+    this._total = 0;
+    this._samples = 0;
+    this._onChange = null;
+  }
+
+  onReadRequest(offset, callback) {
+    var data = new Buffer(8);
+    data.writeDoubleLE(this._lastValue, 0);
+    callback(bleno.Characteristic.RESULT_SUCCESS, data);
+  }
+
+  onSubscribe(maxValueSize, updateValueCallback) {
+    console.log("Subscribed to temperature change.");
+    this._onChange = updateValueCallback;
+    this._lastValue = undefined;
+  }
+
+  onUnsubscribe() {
+    console.log("Unsubscribed to temperature change.");
+    this._onChange = null;
+  }
+
+  valueChange(value) {
+    const NO_SAMPLES = 100;
+    this._total += value;
+    this._samples++;
+
+    if (this._samples < NO_SAMPLES) {
+      return;
+    }
+
+    var newValue = Math.round(this._total / NO_SAMPLES);
+    this._total = 0;
+    this._samples = 0;
+
+    if (this._lastValue && Math.abs(this._lastValue - newValue) < 1) {
+      return;
+    }
+
+    this._lastValue = newValue;
+
+    console.log(newValue);
+    var data = new Buffer(8);
+
+    data.writeDoubleLE(newValue, 0);
+
+    if (this._onChange) {
+      this._onChange(data);
+    }
+  }
+}
+
+bleno.on('advertisingStart', function(error) {
+  bleno.setServices([new bleno.PrimaryService({
+    uuid: 'fc00',
+    characteristics: [TemperatureCharacteristic]
+  })]);
+});
 
 // Arduino sensor
 var SerialPort = require('serialport');
