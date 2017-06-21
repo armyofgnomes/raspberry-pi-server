@@ -35,7 +35,7 @@
       }
 
       handleConnectClick() {
-        navigator.bluetooth.requestDevice({ filters: [{ services: ['battery_service'] }] })
+        navigator.bluetooth.requestDevice({ filters: [{ services: ['e24e9ac7-a763-4f1d-a582-010447333ffc'] }] })
           .then(device => {
             this._device = device;
             this._connected = true;
@@ -43,12 +43,10 @@
             return device.gatt.connect();
           })
           .then(server => {
-            // Getting Battery Service...
-            return server.getPrimaryService('battery_service');
+            return server.getPrimaryService('e24e9ac7-a763-4f1d-a582-010447333ffc');
           })
           .then(service => {
-            // Getting Battery Level Characteristic...
-            return service.getCharacteristic('battery_level');
+            return service.getCharacteristic('f94dcd49-148b-47e6-b102-f115223cd282');
           })
           .then(characteristic => characteristic.startNotifications())
           .then(characteristic => {

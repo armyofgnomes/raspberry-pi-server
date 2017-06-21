@@ -22,7 +22,7 @@ eddystoneBeacon.advertiseUrl(url, options);
 class TemperatureCharacteristic extends bleno.Characteristic {
   constructor() {
     super({
-      uuid: 'fc0a',
+      uuid: 'f94dcd49-148b-47e6-b102-f115223cd282',
       properties: ['read', 'write', 'notify'],
       value: null
     });
@@ -82,7 +82,7 @@ class TemperatureCharacteristic extends bleno.Characteristic {
 
 bleno.on('advertisingStart', function(error) {
   bleno.setServices([new bleno.PrimaryService({
-    uuid: 'fc00',
+    uuid: 'e24e9ac7-a763-4f1d-a582-010447333ffc',
     characteristics: [TemperatureCharacteristic]
   })]);
 });
