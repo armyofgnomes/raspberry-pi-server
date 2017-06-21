@@ -15,7 +15,7 @@
       <h1>Temperature</h1>
       <button hidden="[[_connected]]" on-click="handleConnectClick">Connect to device</button>
       <button hidden="[[!_connected]]" on-click="handleDisconnectClick">Disconnect</button>
-      <p>{{temperature}}</p>
+      <p><span>{{temperature}}</span>&deg; C (<span>{{_cToF(temperature)}}</span>&deg; F)</p>
     </div>
   </template>
 
@@ -72,11 +72,15 @@
 
       handleCharacteristicValueChanged(event) {
         let value = event.target.value;
-        this.temperature = value.getUint8(0);
+        this.temperature = value.getFloat64(0, true);
       }
 
       handleDisconnect(event) {
         this._connected = false;
+      }
+
+      _cToF(celsius) {
+        return (celsius * (9/5) + 32).toFixed(2);
       }
     }
 
