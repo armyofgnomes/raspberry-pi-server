@@ -35,7 +35,7 @@
       }
 
       handleConnectClick() {
-        navigator.bluetooth.requestDevice({ filters: [{ services: ['e24e9ac7-a763-4f1d-a582-010447333ffc'] }] })
+        navigator.bluetooth.requestDevice({ acceptAllDevices: true,  optionalServices: ['e24e9ac7-a763-4f1d-a582-010447333ffc'] })
           .then(device => {
             this._device = device;
             this._connected = true;
