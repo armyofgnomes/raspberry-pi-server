@@ -6,8 +6,18 @@
     <style include="shared-styles">
       :host {
         display: block;
-
         padding: 10px;
+      }
+
+      @media (max-width: 600px) {
+        .card {
+          margin: 10px;
+          padding: 10px;
+        }
+
+        h1 {
+          margin: 5px 0;
+        }
       }
     </style>
 
@@ -35,7 +45,7 @@
       }
 
       handleConnectClick() {
-        navigator.bluetooth.requestDevice({ acceptAllDevices: true,  optionalServices: ['e24e9ac7-a763-4f1d-a582-010447333ffc'] })
+        navigator.bluetooth.requestDevice({ filters: [{ services: ['e24e9ac7-a763-4f1d-a582-010447333ffc'] }] })
           .then(device => {
             this._device = device;
             this._connected = true;

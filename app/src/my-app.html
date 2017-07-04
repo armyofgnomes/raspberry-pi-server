@@ -21,8 +21,16 @@
       :host {
         --app-primary-color: #4285f4;
         --app-secondary-color: black;
+        --app-toolbar-font-size: 16px;
 
         display: block;
+      }
+
+      @media (max-width: 600px) {
+        app-toolbar {
+          height: 56px;
+          padding: 0 8px;
+        }
       }
 
       app-drawer-layout:not([narrow]) [drawer-toggle] {
