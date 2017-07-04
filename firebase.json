@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "app/public",
+    "public": "app/build/es6-unbundled",
     "ignore": [
       "firebase.json",
       "**/.*",
