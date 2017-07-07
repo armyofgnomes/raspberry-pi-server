@@ -44,8 +44,18 @@
         };
       }
 
+      convertTIUUID(uuid16) {
+        return 'f000' + uuid16 + '-0451-4000-b000-000000000000';
+      };
+
       handleConnectClick() {
-        navigator.bluetooth.requestDevice({ filters: [{ services: ['e24e9ac7-a763-4f1d-a582-010447333ffc'] }] })
+        const primaryService = '0000180a-0000-1000-8000-00805f9b34fb'
+        const temperatureService = this.convertTIUUID('aa20');
+        const temperatureDataUUID = this.convertTIUUID('aa21');
+        const temperatureConfigurationUUID = this.convertTIUUID('aa22');
+        const temperaturePeriodUUID = this.convertTIUUID('aa23');
+
+        navigator.bluetooth.requestDevice({ filters: [{ services: [primaryService, temperatureService] }] })
           .then(device => {
             this._device = device;
             this._connected = true;
@@ -53,10 +63,14 @@
             return device.gatt.connect();
           })
           .then(server => {
-            return server.getPrimaryService('e24e9ac7-a763-4f1d-a582-010447333ffc');
+            return server.getPrimaryService(temperatureService);
           })
           .then(service => {
-            return service.getCharacteristic('f94dcd49-148b-47e6-b102-f115223cd282');
+            service.getCharacteristic(temperatureConfigurationUUID).then((characteristic) => {
+              let enableNotifications = Uint8Array.of(1);
+              return characteristic.writeValue(enableNotifications);
+            });
+            return service.getCharacteristic(temperatureDataUUID);
           })
           .then(characteristic => characteristic.startNotifications())
           .then(characteristic => {
@@ -68,9 +82,16 @@
             return characteristic.readValue();
           })
           .then(value => {
-            this.temperature = value.getUint8(0);
+            this.calculateTemperature(value);
           })
           .catch(error => { console.log(error); });
+      }
+
+      calculateTemperature(value) {
+        let rawTemperature = value.getUint16(0, true);
+        let rawHumidity = value.getUint16(2, true);
+
+        this.temperature = ((rawTemperature / 65536) * 165 - 40).toFixed(2);
       }
 
       handleDisconnectClick() {
@@ -82,7 +103,7 @@
 
       handleCharacteristicValueChanged(event) {
         let value = event.target.value;
-        this.temperature = value.getFloat64(0, true);
+        this.calculateTemperature(value);
       }
 
       handleDisconnect(event) {
